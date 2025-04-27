@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Code Snippet Search Engine</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1A365D;
+            --primary-light: #EBF4FF;
+            --accent-color: #FD7E14;
+            --success-color: #38A169;
+            --warning-color: #F6E05E;
+            --error-color: #E53E3E;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+        }
+        
+        .bg-primary-light {
+            background-color: var(--primary-light);
+        }
+        
+        .text-primary-dark {
+            color: var(--primary-color);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-accent:hover {
+            background-color: #E8700D;
+            border-color: #E8700D;
+            color: white;
+        }
+        
+        .search-form {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .snippet-card {
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+        
+        .snippet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-item {
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .history-item:hover {
+            background-color: var(--primary-light);
+        }
+        
+        @media (max-width: 768px) {
+            .search-results {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <path d="m18 16 4-4-4-4"></path>
+                    <path d="m6 8-4 4 4 4"></path>
+                    <path d="m14.5 4-5 16"></path>
+                </svg>
+                <span>GitHub Code Searcher</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Search</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#history">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#snippets">Snippets</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/swagger-ui" target="_blank">API Docs</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-primary-light py-5">
+        <div class="container px-4">
+            <div class="row gx-5 align-items-center justify-content-center">
+                <div class="col-lg-8 col-xl-7 col-xxl-6">
+                    <div class="text-center text-lg-start">
+                        <h1 class="fw-bold text-primary-dark mb-3">Find the code you need</h1>
+                        <p class="lead mb-4">Search across GitHub repositories to discover code snippets. Filter by language, repository, or file extension to find exactly what you're looking for.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Form -->
+    <section class="py-5" id="search">
+        <div class="container px-4">
+            <div class="row gx-5 justify-content-center">
+                <div class="col-lg-8">
+                    <div class="search-form bg-white p-4 p-md-5">
+                        <h2 class="mb-4 text-center">Search GitHub Code</h2>
+                        <form id="searchForm">
+                            <div class="mb-3">
+                                <label for="query" class="form-label">Search Query</label>
+                                <input type="text" class="form-control" id="query" placeholder="Enter search terms" required>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="language" class="form-label">Language</label>
+                                    <input type="text" class="form-control" id="language" placeholder="e.g., java">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="repository" class="form-label">Repository</label>
+                                    <input type="text" class="form-control" id="repository" placeholder="e.g., owner/repo">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="fileExtension" class="form-label">File Extension</label>
+                                    <input type="text" class="form-control" id="fileExtension" placeholder="e.g., .java">
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-accent btn-lg">Search Code</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results -->
+    <section class="py-5 bg-light d-none" id="searchResults">
+        <div class="container px-4">
+            <h2 class="mb-4">Search Results</h2>
+            <div id="resultsStats" class="mb-4"></div>
+            <div id="snippetsList" class="row g-4"></div>
+            <div class="text-center mt-4">
+                <button id="loadMoreResults" class="btn btn-accent d-none">Load More Results</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search History -->
+    <section class="py-5" id="history">
+        <div class="container px-4">
+            <h2 class="mb-4">Your Search History</h2>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Query</th>
+                                    <th>Language</th>
+                                    <th>Repository</th>
+                                    <th>Results</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyList"></tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button id="loadMoreHistory" class="btn btn-outline-primary">Load More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Full-text Snippet Search -->
+    <section class="py-5 bg-light" id="snippets">
+        <div class="container px-4">
+            <h2 class="mb-4">Search Within Cached Snippets</h2>
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="snippetSearchQuery" class="form-control" placeholder="Search in code content...">
+                        <button class="btn btn-accent" id="snippetSearchButton">Search</button>
+                    </div>
+                </div>
+            </div>
+            <div id="snippetSearchResults" class="row g-4"></div>
+            <div class="text-center mt-4">
+                <button id="loadMoreSnippets" class="btn btn-outline-primary d-none">Load More Snippets</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading Spinner -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="loadingMessage">Processing your request...</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // DOM Elements
+        const searchForm = document.getElementById('searchForm');
+        const searchResults = document.getElementById('searchResults');
+        const resultsStats = document.getElementById('resultsStats');
+        const snippetsList = document.getElementById('snippetsList');
+        const historyList = document.getElementById('historyList');
+        const loadMoreHistory = document.getElementById('loadMoreHistory');
+        const snippetSearchQuery = document.getElementById('snippetSearchQuery');
+        const snippetSearchButton = document.getElementById('snippetSearchButton');
+        const snippetSearchResults = document.getElementById('snippetSearchResults');
+        const loadMoreSnippets = document.getElementById('loadMoreSnippets');
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // State variables
+        let historyPage = 0;
+        let snippetsPage = 0;
+        let currentHistorySearch = '';
+        let currentSnippetSearch = '';
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSearchHistory();
+            
+            searchForm.addEventListener('submit', handleSearch);
+            loadMoreHistory.addEventListener('click', () => loadSearchHistory(true));
+            snippetSearchButton.addEventListener('click', handleSnippetSearch);
+            loadMoreSnippets.addEventListener('click', () => searchSnippets(currentSnippetSearch, true));
+        });
+
+        // Functions
+        async function handleSearch(e) {
+            e.preventDefault();
+            showLoading('Searching GitHub code...');
+            
+            const searchData = {
+                query: document.getElementById('query').value,
+                language: document.getElementById('language').value || null,
+                repository: document.getElementById('repository').value || null,
+                fileExtension: document.getElementById('fileExtension').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(searchData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+                
+                const data = await response.json();
+                displaySearchResults(data);
+                loadSearchHistory(); // Refresh history
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Search failed. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displaySearchResults(data) {
+            searchResults.classList.remove('d-none');
+            
+            resultsStats.innerHTML = `
+                <div class="alert alert-info">
+                    Found ${data.totalResults} results for "${data.query}"
+                    ${data.language ? ` in ${data.language}` : ''}
+                    ${data.repository ? ` from ${data.repository}` : ''}
+                    ${data.fileExtension ? ` with extension ${data.fileExtension}` : ''}
+                </div>
+            `;
+            
+            snippetsList.innerHTML = '';
+            
+            data.snippets.forEach(snippet => {
+                const card = document.createElement('div');
+                card.className = 'col-lg-6 mb-4';
+                
+                card.innerHTML = `
+                    <div class="card h-100 snippet-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">${snippet.name}</h5>
+                            <span class="badge bg-primary">${snippet.language || 'Unknown'}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted mb-2">
+                                <small>${snippet.repository} • ${snippet.path}</small>
+                            </p>
+                            <div class="code-block">
+                                <pre><code class="language-${snippet.language ? snippet.language.toLowerCase() : 'plaintext'}">${escapeHtml(snippet.content)}</code></pre>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="${snippet.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                View on GitHub
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                snippetsList.appendChild(card);
+            });
+            
+            // Initialize syntax highlighting
+            Prism.highlightAll();
+            
+            // Scroll to results
+            searchResults.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function loadSearchHistory(loadMore = false) {
+            if (!loadMore) {
+                historyPage = 0;
+            }
+            
+            try {
+                const response = await fetch(`/api/history?page=${historyPage}&size=10&currentUserOnly=true`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load history');
+                }
+                
+                const data = await response.json();
+                
+                if (!loadMore) {
+                    historyList.innerHTML = '';
+                }
+                
+                data.content.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'history-item';
+                    
+                    row.innerHTML = `
+                        <td>${item.query}</td>
+                        <td>${item.language || '-'}</td>
+                        <td>${item.repository || '-'}</td>
+                        <td>${item.totalResults}</td>
+                        <td>${formatDate(item.timestamp)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary view-search" data-id="${item.id}">View</button>
+                        </td>
+                    `;
+                    
+                    historyList.appendChild(row);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-search').forEach(btn => {
+                    btn.addEventListener('click', () => getSearchById(btn.dataset.id));
+                });
+                
+                // Update load more button
+                loadMoreHistory.disabled = data.last;
+                
+                if (!loadMore) {
+                    historyPage = 0;
+                }
+                
+                historyPage++;
+                
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        async function getSearchById(id) {
+            showLoading('Loading search results...');
+            
+            try {
+                const response = await fetch(`/api/search/${id}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load search details');
+                }
+                
+                const data = await response.json();
+                displaySearchResults(data);
+                
+                // Scroll to results
+                searchResults.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error loading search details:', error);
+                alert('Failed to load search details');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleSnippetSearch() {
+            const query = snippetSearchQuery.value.trim();
+            
+            if (query.length < 2) {
+                alert('Please enter at least 2 characters to search');
+                return;
+            }
+            
+            currentSnippetSearch = query;
+            snippetsPage = 0;
+            searchSnippets(query);
+        }
+
+        async function searchSnippets(query, loadMore = false) {
+            if (!loadMore) {
+                snippetsPage = 0;
+                snippetSearchResults.innerHTML = '';
+            }
+            
+            showLoading('Searching cached snippets...');
+            
+            try {
+                const response = await fetch(`/api/snippets/search?q=${encodeURIComponent(query)}&page=${snippetsPage}&size=10`);
+                
+                if (!response.ok) {
+                    throw new Error('Snippet search failed');
+                }
+                
+                const data = await response.json();
+                
+                if (data.content.length === 0 && !loadMore) {
+                    snippetSearchResults.innerHTML = '<div class="col-12"><div class="alert alert-warning">No matching snippets found</div></div>';
+                    loadMoreSnippets.classList.add('d-none');
+                    return;
+                }
+                
+                data.content.forEach(snippet => {
+                    const card = document.createElement('div');
+                    card.className = 'col-md-6 mb-4';
+                    
+                    card.innerHTML = `
+                        <div class="card h-100 snippet-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">${snippet.name}</h5>
+                                <span class="badge bg-primary">${snippet.language || 'Unknown'}</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted mb-2">
+                                    <small>${snippet.repository} • ${snippet.path}</small>
+                                </p>
+                                <div class="code-block">
+                                    <pre><code class="language-${snippet.language ? snippet.language.toLowerCase() : 'plaintext'}">${escapeHtml(snippet.content)}</code></pre>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="${snippet.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    View on GitHub
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    
+                    snippetSearchResults.appendChild(card);
+                });
+                
+                // Initialize syntax highlighting
+                Prism.highlightAll();
+                
+                // Update load more button
+                loadMoreSnippets.classList.toggle('d-none', data.last);
+                snippetsPage++;
+                
+            } catch (error) {
+                console.error('Error searching snippets:', error);
+                alert('Snippet search failed');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Utility Functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showLoading(message = 'Loading...') {
+            loadingMessage.textContent = message;
+            loadingModal.show();
+        }
+
+        function hideLoading() {
+            loadingModal.hide();
+        }
+    </script>
+</body>
+</html>
